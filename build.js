@@ -17,6 +17,8 @@ const path = require("path");
 
 const SITE = "https://cbradiohq.com";
 const OUT_DIR = path.join(__dirname, "dist");
+const AMZ_TAG = "cbradiohq-20"; // live Amazon Associates tag (single source for build.js)
+const GA_ID = "G-FBHW54X2D5";
 
 // Keep this in sync with the CHANNELS array in index.html.
 const CHANNELS = [
@@ -77,116 +79,6 @@ const CH_CONTEXT = {
   38: "Channel 38 (specifically 38 Lower Sideband, \"38 LSB\") is the most active SSB DX channel on the band. Skip-chasers and long-distance operators congregate here when conditions allow."
 };
 
-function channelPage(c) {
-  const title = c.tag
-    ? `CB Channel ${c.ch} (${c.freq} MHz) — ${c.tag} Channel | CB Radio HQ`
-    : `CB Channel ${c.ch} Frequency: ${c.freq} MHz | CB Radio HQ`;
-  const description = `Channel ${c.ch}: ${c.freq} MHz. ${c.use}.`.slice(0, 150);
-  const canonical = `${SITE}/channel/${c.ch}/`;
-
-  const context = CH_CONTEXT[c.ch] ||
-    `Channel ${c.ch} sits at ${c.freq} MHz and is used mainly for ${c.use.toLowerCase()}. Like most of the 40-channel band, exact usage varies by region and time of day — the best way to know what a channel is used for near you is to listen before you transmit.`;
-
-  // neighbor links keep users (and crawlers) moving between pages
-  const prev = c.ch > 1 ? c.ch - 1 : null;
-  const next = c.ch < 40 ? c.ch + 1 : null;
-
-  const isSSB = c.ch >= 36;
-  const powerLine = isSSB
-    ? "This channel is in the SSB segment: up to 12 watts PEP on single-sideband is legal, versus 4 watts on AM. No license is required either way."
-    : "Like all AM CB channels, the legal power limit here is 4 watts, and no license is required to transmit.";
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${title}</title>
-<meta name="description" content="${description}">
-<link rel="canonical" href="${canonical}">
-<meta name="robots" content="index, follow">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FBHW54X2D5"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-FBHW54X2D5');
-</script>
-<meta property="og:type" content="article">
-<meta property="og:title" content="${title}">
-<meta property="og:description" content="${description}">
-<meta property="og:url" content="${canonical}">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TechArticle",
-  "headline": "CB Channel ${c.ch} — ${c.freq} MHz",
-  "description": "${description.replace(/"/g, '\\"')}",
-  "url": "${canonical}",
-  "publisher": { "@type": "Organization", "name": "CB Radio HQ", "url": "${SITE}/" }
-}
-</script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {"@type":"ListItem","position":1,"name":"CB Radio HQ","item":"${SITE}/"},
-    {"@type":"ListItem","position":2,"name":"Channel Guide","item":"${SITE}/#channels"},
-    {"@type":"ListItem","position":3,"name":"Channel ${c.ch}","item":"${canonical}"}
-  ]
-}
-</script>
-<style>
-  :root{--orange:#ff6a1f;}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:#14171a;color:#e9ebee;font-family:Inter,-apple-system,sans-serif;line-height:1.65;}
-  .wrap{max-width:660px;margin:0 auto;padding:36px 24px 60px;}
-  a{color:var(--orange);}
-  .home-link{font-family:'IBM Plex Mono',monospace;font-size:12px;text-decoration:none;color:#9aa0a8;}
-  h1{font-family:Oswald,sans-serif;text-transform:uppercase;font-size:30px;margin:22px 0 4px;}
-  .freq{font-family:'IBM Plex Mono',monospace;color:var(--orange);font-size:22px;font-weight:600;}
-  .tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.04em;padding:3px 9px;border:1px solid var(--orange);color:var(--orange);border-radius:2px;text-transform:uppercase;margin-left:10px;vertical-align:middle;}
-  p{color:#c3c7cd;margin:16px 0;}
-  .fact{background:#1b1f23;border:1px solid #2c3238;border-radius:6px;padding:16px 20px;margin:24px 0;}
-  .fact div{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#9aa0a8;margin:4px 0;}
-  .fact b{color:#e9ebee;}
-  .neighbors{display:flex;justify-content:space-between;gap:12px;margin:32px 0 8px;font-family:'IBM Plex Mono',monospace;font-size:13px;}
-  .cta{display:block;margin-top:28px;padding:16px 20px;background:#1b1f23;border:1px solid var(--orange);border-radius:6px;text-decoration:none;}
-  .cta b{color:var(--orange);}
-  .cta span{display:block;color:#9aa0a8;font-size:13px;margin-top:4px;}
-</style>
-</head>
-<body>
-  <div class="wrap">
-    <a class="home-link" href="${SITE}/">← CB Radio HQ</a>
-    <h1>CB Channel ${c.ch}${c.tag ? `<span class="tag">${c.tag}</span>` : ""}</h1>
-    <p class="freq">${c.freq} MHz</p>
-
-    <div class="fact">
-      <div>FREQUENCY: <b>${c.freq} MHz</b></div>
-      <div>MODE: <b>${isSSB ? "AM / SSB" : "AM"}</b></div>
-      <div>LEGAL POWER: <b>${isSSB ? "4W AM / 12W SSB" : "4W AM"}</b></div>
-      <div>LICENSE: <b>None required</b></div>
-    </div>
-
-    <p>${context}</p>
-    <p>${powerLine}</p>
-    <p>All 40 CB channels are fixed nationwide by the FCC between 26.965 and 27.405 MHz. Channel <em>uses</em> like the ones described here are widely-observed operator conventions, not law — the frequency is fixed, but who's talking on it depends on your region and the time of day.</p>
-
-    <div class="neighbors">
-      ${prev ? `<a href="${SITE}/channel/${prev}/">← Channel ${prev}</a>` : "<span></span>"}
-      ${next ? `<a href="${SITE}/channel/${next}/">Channel ${next} →</a>` : "<span></span>"}
-    </div>
-
-    <a class="cta" href="${SITE}/#skip">
-      <b>Is skip running right now?</b>
-      <span>Check the live NOAA-driven Skip Outlook, browse the full channel guide, or run the SWR Doctor on CB Radio HQ →</span>
-    </a>
-  </div>
-</body>
-</html>`;
-}
 
 function buildSitemap(channelUrls, toolUrls = []) {
   const staticUrls = [
@@ -229,7 +121,7 @@ const TOOL_PAGES = [
     title: "CB Antenna & Mount Picker for Your Vehicle | CB Radio HQ",
     description: "Pick your vehicle and priority — get the exact CB antenna and mount recommended, including the ground-plane warning most beginners miss.",
     schemaName: "CB Antenna & Mount Picker",
-    extraJs: 'const AMZ_TAG = "cbradiohq-20"; // live Amazon Associates tag\n',
+    extraJs: 'const AMZ_TAG = "' + AMZ_TAG + '"; // live Amazon Associates tag\n',
   },
   {
     slug: "is-my-radio-legal",
@@ -295,13 +187,267 @@ const REVIEWS = [
   },
 ];
 
-function reviewPage(review, styleBlock) {
+
+// =====================================================
+// SHARED CHROME — HQ Radio Network design system.
+// The homepage carries <!--HQ:HEADER--> / <!--HQ:FOOTER--> placeholders;
+// every generated page uses the same functions, so nothing drifts.
+// Edit NETWORK / SOCIAL / AUTHOR here to change it sitewide.
+// =====================================================
+const NETWORK = [
+  { name: "HQ Shortwave Radio", url: "https://hqshortwaveradio.com" },
+  { name: "POC Radio HQ", url: "https://pocradiohq.com" },
+  { name: "CB Radio HQ", url: SITE, self: true },
+  { name: "GMRS HQ", url: "https://gmrshq.com" },
+];
+const SOCIAL = [
+  { name: "YouTube", url: "https://www.youtube.com/@Hqshortwaveradio" },
+  { name: "TikTok", url: "https://www.tiktok.com/@hqshortwaveradio" },
+  { name: "Facebook", url: "https://www.facebook.com/Hqshortwaveradio" },
+];
+const AUTHOR = { name: "Michael Smith", call: "KM7FMJ", where: "Arizona" };
+const FONTS_LINK =
+  '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">';
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function gaSnippet() {
+  return `<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '${GA_ID}');
+</script>`;
+}
+
+// shared <head> tail for every generated page
+function headAssets() {
+  return `<meta name="theme-color" content="#0a0b0e">
+${FONTS_LINK}
+<link rel="stylesheet" href="/styles.css">`;
+}
+
+function sigBars(score) {
+  const s = Math.max(0, Math.min(5, Number(score) || 0));
+  const full = Math.floor(s + 1e-9);
+  const half = s - full >= 0.25 && s - full < 0.75;
+  const fullAdj = s - full >= 0.75 ? full + 1 : full;
+  let bars = "";
+  for (let i = 1; i <= 5; i++) bars += `<i class="${i <= fullAdj ? "f" : ""}"></i>`;
+  return `<span class="sig" role="img" aria-label="Rated ${s.toFixed(1)} out of 5"><span class="sig-bars">${bars}</span><span class="sig-num">${s.toFixed(1)}<small>/5</small></span></span>`;
+}
+
+function netBar(home) {
+  const links = NETWORK.map((n) =>
+    n.self
+      ? `<a class="on" href="${home ? "#top" : SITE + "/"}" aria-current="true">${n.name}</a>`
+      : `<a href="${n.url}" target="_blank" rel="noopener">${n.name}</a>`
+  ).join("");
+  return `<div class="hq-net"><div class="hq-net-in"><span class="hq-net-lbl"><i></i>HQ Radio Network</span>${links}</div></div>`;
+}
+
+function ticker(home) {
+  const h = home ? "" : SITE + "/";
+  const r = REVIEWS[0];
+  const items = [
+    `Live skip outlook: <a href="${h}#skip">check conditions</a>`,
+    `40 channels · 4W AM / 12W SSB · no license required`,
+    r ? `Latest review: <a href="${SITE}/reviews/${r.slug}/">${esc(r.name)}</a> · ${Number(r.ratingValue).toFixed(1)}/5` : null,
+    `Free <a href="${SITE}/swr-calculator/">SWR Doctor</a>`,
+    `Built by ${AUTHOR.name}, ${AUTHOR.call} · ${AUTHOR.where}`,
+  ].filter(Boolean);
+  const run = items.map((i) => `<span>${i}</span>`).join("");
+  return `<div class="hq-ticker" aria-label="Latest from CB Radio HQ"><div class="hq-tk-lbl"><i></i>On the air</div><div class="hq-tk-scroll"><div class="hq-tk-track">${run}${run.replace(/<span>/g, '<span aria-hidden="true">')}</div></div></div>`;
+}
+
+function masthead(home) {
+  const h = home ? "" : SITE + "/";
+  const nav = [
+    [`${h}#channels`, "Channels"],
+    [`${h}#skip`, "Skip"],
+    [`${h}#sdr`, "Listen Live"],
+    [`${h}#gear`, "Gear"],
+    [`${SITE}/reviews/`, "Reviews"],
+    [`${h}#spots`, "Community"],
+  ];
+  return `${netBar(home)}${ticker(home)}
+<header class="hq-mast"><div class="hq-mast-in">
+  <a class="hq-brand" href="${home ? "#top" : SITE + "/"}" aria-label="CB Radio HQ home"><span class="hq-sbars" aria-hidden="true"><i></i><i></i><i></i></span><span><span class="hq-bname">CB Radio<em>HQ</em></span><span class="hq-btag" style="display:block">Free tools for the 11-meter band</span></span></a>
+  <button class="hq-burger" type="button" aria-expanded="false" aria-controls="hq-nav" onclick="var n=document.getElementById('hq-nav');var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o);this.textContent=o?'Close':'Menu';">Menu</button>
+  <nav class="hq-nav" id="hq-nav" aria-label="Main">${nav.map(([u, l]) => `<a href="${u}">${l}</a>`).join("")}<a class="hq-cta" href="${h}#tools">Free tools</a></nav>
+</div></header>`;
+}
+
+function footer() {
+  return `<footer class="hq-foot">
+  <div class="hq-foot-in">
+    <div>
+      <a class="hq-brand" href="${SITE}/"><span class="hq-sbars" aria-hidden="true"><i></i><i></i><i></i></span><span class="hq-bname">CB Radio<em>HQ</em></span></a>
+      <p>Free, independent tools and guides for CB radio: a live skip outlook, SWR Doctor, antenna picker, legal-radio checker and the full 40-channel guide.</p>
+      <p>Built solo by ${AUTHOR.name}, ${AUTHOR.call}. Part of the HQ Radio Network.</p>
+    </div>
+    <div><h4>Tools</h4><ul>
+      <li><a href="${SITE}/swr-calculator/">SWR Doctor</a></li>
+      <li><a href="${SITE}/antenna-picker/">Antenna Picker</a></li>
+      <li><a href="${SITE}/is-my-radio-legal/">Is My Radio Legal?</a></li>
+      <li><a href="${SITE}/#skip">Skip Outlook</a></li>
+      <li><a href="${SITE}/#sdr">Listen Live</a></li>
+      <li><a href="${SITE}/#log">Skip Log</a></li>
+    </ul></div>
+    <div><h4>Learn</h4><ul>
+      <li><a href="${SITE}/#channels">40-Channel Guide</a></li>
+      <li><a href="${SITE}/#legal">What's Legal</a></li>
+      <li><a href="${SITE}/#codes">10-Codes</a></li>
+      <li><a href="${SITE}/#gear">Gear Guide</a></li>
+      <li><a href="${SITE}/reviews/">Reviews</a></li>
+      <li><a href="${SITE}/#faq">FAQ</a></li>
+      <li><a href="${SITE}/#about">About</a></li>
+    </ul></div>
+    <div><h4>HQ Radio Network</h4><ul>
+      ${NETWORK.filter((n) => !n.self).map((n) => `<li><a href="${n.url}" target="_blank" rel="noopener">${n.name}</a></li>`).join("\n      ")}
+      ${SOCIAL.map((s) => `<li><a href="${s.url}" target="_blank" rel="noopener">${s.name}</a></li>`).join("\n      ")}
+      <li><a href="mailto:cbradiohq@gmail.com">Contact</a></li>
+    </ul></div>
+  </div>
+  <div class="hq-foot-bot"><span>© ${new Date().getFullYear()} CB Radio HQ · Not affiliated with the FCC, REACT International, or any radio manufacturer.</span><span>As an Amazon Associate we earn from qualifying purchases.</span></div>
+</footer>`;
+}
+
+function authorCard() {
+  return `<aside class="author-card" aria-label="About the reviewer">
+  <div class="author-plate">${AUTHOR.call}<small>LICENSED</small></div>
+  <div>
+    <h3>Reviewed by ${AUTHOR.name}</h3>
+    <div class="role">Licensed ham · ${AUTHOR.call} · ${AUTHOR.where} · HQ Radio Network</div>
+    <p>I run CB Radio HQ, HQ Shortwave Radio and POC Radio HQ. Every review here is first-person and lists the cons, not a rewritten spec sheet.</p>
+    <div class="author-links"><a href="${SITE}/#about">About me</a><a href="${SOCIAL[0].url}" target="_blank" rel="noopener">Videos on YouTube</a><a href="https://hqshortwaveradio.com" target="_blank" rel="noopener">HQ Shortwave Radio</a></div>
+  </div>
+</aside>`;
+}
+
+function relatedTools() {
+  return `<div class="related">
+    <a href="${SITE}/swr-calculator/">SWR Doctor</a>
+    <a href="${SITE}/antenna-picker/">Antenna Picker</a>
+    <a href="${SITE}/is-my-radio-legal/">Is My Radio Legal?</a>
+    <a href="${SITE}/#skip">Skip Outlook</a>
+    <a href="${SITE}/reviews/">Gear Reviews</a>
+  </div>`;
+}
+
+function channelPage(c) {
+  const title = c.tag
+    ? `CB Channel ${c.ch} (${c.freq} MHz) — ${c.tag} Channel | CB Radio HQ`
+    : `CB Channel ${c.ch} Frequency: ${c.freq} MHz | CB Radio HQ`;
+  const description = `Channel ${c.ch}: ${c.freq} MHz. ${c.use}.`.slice(0, 150);
+  const canonical = `${SITE}/channel/${c.ch}/`;
+
+  const context = CH_CONTEXT[c.ch] ||
+    `Channel ${c.ch} sits at ${c.freq} MHz and is used mainly for ${c.use.toLowerCase()}. Like most of the 40-channel band, exact usage varies by region and time of day — the best way to know what a channel is used for near you is to listen before you transmit.`;
+
+  const prev = c.ch > 1 ? c.ch - 1 : null;
+  const next = c.ch < 40 ? c.ch + 1 : null;
+  const isSSB = c.ch >= 36;
+  const powerLine = isSSB
+    ? "This channel is in the SSB segment: up to 12 watts PEP on single-sideband is legal, versus 4 watts on AM. No license is required either way."
+    : "Like all AM CB channels, the legal power limit here is 4 watts, and no license is required to transmit.";
+  const chips = CHANNELS.map((x) => `<a href="${SITE}/channel/${x.ch}/"${x.ch === c.ch ? ' class="on" aria-current="page"' : ""}>${x.ch}</a>`).join("");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title}</title>
+<meta name="description" content="${description}">
+<link rel="canonical" href="${canonical}">
+<meta name="robots" content="index, follow">
+${gaSnippet()}
+<meta property="og:type" content="article">
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${description}">
+<meta property="og:url" content="${canonical}">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "CB Channel ${c.ch} — ${c.freq} MHz",
+  "description": "${description.replace(/"/g, '\\"')}",
+  "url": "${canonical}",
+  "publisher": { "@type": "Organization", "name": "CB Radio HQ", "url": "${SITE}/" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type":"ListItem","position":1,"name":"CB Radio HQ","item":"${SITE}/"},
+    {"@type":"ListItem","position":2,"name":"Channel Guide","item":"${SITE}/#channels"},
+    {"@type":"ListItem","position":3,"name":"Channel ${c.ch}","item":"${canonical}"}
+  ]
+}
+</script>
+${headAssets()}
+</head>
+<body>
+${masthead(false)}
+<main class="page-wrap">
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="${SITE}/">CB Radio HQ</a> / <a href="${SITE}/#channels">Channel Guide</a> / Channel ${c.ch}</nav>
+
+  <div class="ch-hero">
+    <div class="ch-lcd"><div class="lbl">CB Channel</div><div class="num">${String(c.ch).padStart(2, "0")}</div><div class="fq">${c.freq} MHz</div></div>
+    <div class="ch-title">
+      <h1>CB Channel ${c.ch}${c.tag ? `<span class="tag ${c.tag === "EMERGENCY" || c.tag === "TRUCKER" ? "hot" : ""}">${c.tag}</span>` : ""}</h1>
+      <p>${esc(c.use)}</p>
+    </div>
+  </div>
+
+  <div class="facts">
+    <div><span>Frequency</span><b>${c.freq} MHz</b></div>
+    <div><span>Mode</span><b>${isSSB ? "AM / SSB" : "AM"}</b></div>
+    <div><span>Legal power</span><b>${isSSB ? "4W AM / 12W SSB" : "4W AM"}</b></div>
+    <div><span>License</span><b>None required</b></div>
+  </div>
+
+  <div class="ch-body">
+    <p>${context}</p>
+    <p>${powerLine}</p>
+    <p>All 40 CB channels are fixed nationwide by the FCC between 26.965 and 27.405 MHz. Channel <em>uses</em> like the ones described here are widely-observed operator conventions, not law — the frequency is fixed, but who's talking on it depends on your region and the time of day.</p>
+  </div>
+
+  <div class="ch-nav">
+    ${prev ? `<a href="${SITE}/channel/${prev}/">← Channel ${prev}</a>` : "<span></span>"}
+    ${next ? `<a href="${SITE}/channel/${next}/">Channel ${next} →</a>` : "<span></span>"}
+  </div>
+
+  <div class="chips-h">All 40 channels</div>
+  <div class="chips">${chips}</div>
+
+  <a class="cta-card" href="${SITE}/#skip">
+    <b>Is skip running right now?</b>
+    <span>Check the live NOAA-driven Skip Outlook, browse the full channel guide, or run the SWR Doctor on CB Radio HQ →</span>
+  </a>
+  ${relatedTools()}
+</main>
+${footer()}
+</body>
+</html>`;
+}
+
+
+
+function reviewPage(review) {
   const canonical = `${SITE}/reviews/${review.slug}/`;
   const prosHtml = review.pros.map((p) => `<li>${p}</li>`).join("\n          ");
   const consHtml = review.cons.map((c) => `<li>${c}</li>`).join("\n          ");
   const bodyHtml = review.body
-    .map((section) => `<h2>${section.h}</h2>\n        <p>${section.p}</p>`)
-    .join("\n\n        ");
+    .map((section) => `<h2>${section.h}</h2>\n      <p>${section.p}</p>`)
+    .join("\n\n      ");
+  const buy = `https://www.amazon.com/dp/${review.asin}?tag=${AMZ_TAG}`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -311,13 +457,7 @@ function reviewPage(review, styleBlock) {
 <meta name="description" content="${review.description}">
 <link rel="canonical" href="${canonical}">
 <meta name="robots" content="index, follow">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FBHW54X2D5"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-FBHW54X2D5');
-</script>
+${gaSnippet()}
 <meta property="og:type" content="article">
 <meta property="og:title" content="${review.title}">
 <meta property="og:description" content="${review.description}">
@@ -352,59 +492,70 @@ function reviewPage(review, styleBlock) {
   ]
 }
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-${styleBlock}
+${headAssets()}
 </head>
 <body>
-<div style="max-width:760px;margin:0 auto;padding:40px 24px 80px;font-family:'Inter',sans-serif;color:var(--text);line-height:1.7;">
-  <a href="${SITE}/" style="display:inline-block;margin-bottom:24px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);text-decoration:none;">← CB Radio HQ</a>
+${masthead(false)}
+<main class="page-wrap">
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="${SITE}/">CB Radio HQ</a> / <a href="${SITE}/reviews/">Reviews</a> / ${review.name}</nav>
 
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--orange);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:8px;">Hands-On Review</div>
-  <h1 style="font-family:'Oswald',sans-serif;font-size:38px;margin:0 0 6px;">${review.name}</h1>
-  <div style="font-size:14px;color:var(--text-dim);margin-bottom:28px;">Reviewed by Michael Smith, CB Radio HQ — est. price ${review.price}</div>
+  <div class="pg-hero">
+    <div class="rv-badge">Hands-on review</div>
+    <h1>${review.name}</h1>
+    <div class="cat">Reviewed by ${AUTHOR.name} · CB Radio HQ</div>
+    ${sigBars(review.ratingValue)}
+    <div class="price-box">
+      <div><div class="lbl">Est. price</div><div class="price">${review.price}</div></div>
+      <a class="btn btn-primary gear-link" href="${buy}" target="_blank" rel="noopener sponsored">View on Amazon →</a>
+    </div>
+    <p class="disclosure">As an Amazon Associate, CB Radio HQ earns from qualifying purchases. This costs you nothing extra.</p>
+  </div>
 
-  <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:32px;">
-    <div style="flex:1;min-width:240px;background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;padding:20px;">
-      <div style="font-weight:600;color:var(--text);margin-bottom:10px;">👍 What I liked</div>
-      <ul style="margin:0;padding-left:20px;color:var(--text-dim);font-size:14.5px;">
+  <section class="block">
+    <div class="pros-cons">
+      <div class="pros">
+        <h3>What I liked</h3>
+        <ul>
           ${prosHtml}
-      </ul>
-    </div>
-    <div style="flex:1;min-width:240px;background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;padding:20px;">
-      <div style="font-weight:600;color:var(--text);margin-bottom:10px;">👎 What I didn't</div>
-      <ul style="margin:0;padding-left:20px;color:var(--text-dim);font-size:14.5px;">
+        </ul>
+      </div>
+      <div class="cons">
+        <h3>What I didn't</h3>
+        <ul>
           ${consHtml}
-      </ul>
+        </ul>
+      </div>
     </div>
+  </section>
+
+  <section class="block">
+    <div class="rv-body">
+      ${bodyHtml}
+    </div>
+  </section>
+
+  <div class="verdict-box">
+    <h3>Verdict</h3>
+    <p>${review.verdict}</p>
   </div>
 
-  <div style="font-size:16px;">
-    ${bodyHtml}
-  </div>
+  <a class="btn btn-primary gear-link" style="margin-top:24px;" href="${buy}" target="_blank" rel="noopener sponsored">View on Amazon →</a>
 
-  <div style="margin-top:36px;padding:20px;background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;">
-    <div style="font-weight:600;margin-bottom:8px;">Verdict</div>
-    <p style="margin:0;color:var(--text-dim);">${review.verdict}</p>
-  </div>
-
-  <a class="gear-link" href="https://www.amazon.com/dp/${review.asin}?tag=cbradiohq-20" target="_blank" rel="noopener sponsored" style="display:inline-block;margin-top:24px;background:var(--orange);color:#000;font-weight:600;padding:12px 24px;border-radius:6px;text-decoration:none;">View on Amazon →</a>
-
-  <footer style="margin-top:60px;font-size:12.5px;color:var(--text-faint);border-top:1px solid var(--line);padding-top:20px;">
-    More from <a href="${SITE}/" style="color:var(--orange);">CB Radio HQ</a> — check the <a href="${SITE}/swr-calculator/" style="color:var(--orange);">SWR Calculator</a> or <a href="${SITE}/#gear" style="color:var(--orange);">full gear guide</a>.
-  </footer>
-</div>
+  ${authorCard()}
+  ${relatedTools()}
+</main>
+${footer()}
 </body>
 </html>`;
 }
 
-function reviewsIndexPage(styleBlock) {
+function reviewsIndexPage() {
   const canonical = `${SITE}/reviews/`;
   const cards = REVIEWS.map(
-    (r) => `<a href="${SITE}/reviews/${r.slug}/" style="display:block;background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;padding:20px;text-decoration:none;color:inherit;margin-bottom:16px;">
-      <div style="font-weight:600;font-size:18px;color:var(--text);">${r.name}</div>
-      <div style="font-size:13.5px;color:var(--text-dim);margin-top:6px;">${r.description}</div>
+    (r) => `<a class="review-card" href="${SITE}/reviews/${r.slug}/">
+      <h2>${r.name}</h2>
+      <p>${r.description}</p>
+      ${sigBars(r.ratingValue)}
     </a>`
   ).join("\n    ");
   return `<!DOCTYPE html>
@@ -416,30 +567,29 @@ function reviewsIndexPage(styleBlock) {
 <meta name="description" content="Real hands-on CB radio and gear reviews from CB Radio HQ — honest pros, cons, and verdicts, no fluff.">
 <link rel="canonical" href="${canonical}">
 <meta name="robots" content="index, follow">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FBHW54X2D5"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-FBHW54X2D5');
-</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-${styleBlock}
+${gaSnippet()}
+${headAssets()}
 </head>
 <body>
-<div style="max-width:760px;margin:0 auto;padding:40px 24px 80px;font-family:'Inter',sans-serif;color:var(--text);">
-  <a href="${SITE}/" style="display:inline-block;margin-bottom:24px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);text-decoration:none;">← CB Radio HQ</a>
-  <h1 style="font-family:'Oswald',sans-serif;font-size:34px;margin:0 0 20px;">Gear Reviews</h1>
-  <p style="color:var(--text-dim);margin-bottom:28px;">Hands-on reviews, written by a real one-man CB operation — not rewritten spec sheets.</p>
-  ${cards}
-</div>
+${masthead(false)}
+<main class="page-wrap">
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="${SITE}/">CB Radio HQ</a> / Reviews</nav>
+  <div class="pg-hero">
+    <div class="rv-badge">Hands-on</div>
+    <h1>Gear Reviews</h1>
+    <p style="margin:0;">Hands-on reviews, written by a real one-man CB operation — not rewritten spec sheets.</p>
+  </div>
+  <section class="block">
+    ${cards}
+  </section>
+  ${relatedTools()}
+</main>
+${footer()}
 </body>
 </html>`;
 }
 
-function toolPage(tool, styleBlock, sectionHtml, toolJs) {
+function toolPage(tool, sectionHtml, toolJs) {
   const canonical = `${SITE}/${tool.slug}/`;
   return `<!DOCTYPE html>
 <html lang="en">
@@ -450,13 +600,7 @@ function toolPage(tool, styleBlock, sectionHtml, toolJs) {
 <meta name="description" content="${tool.description}">
 <link rel="canonical" href="${canonical}">
 <meta name="robots" content="index, follow">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FBHW54X2D5"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-FBHW54X2D5');
-</script>
+${gaSnippet()}
 <meta property="og:type" content="website">
 <meta property="og:title" content="${tool.title}">
 <meta property="og:description" content="${tool.description}">
@@ -484,24 +628,18 @@ function toolPage(tool, styleBlock, sectionHtml, toolJs) {
   ]
 }
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-${styleBlock}
+${headAssets()}
 </head>
-<body style="padding:0;">
-<a href="${SITE}/" class="home-link" style="display:block;max-width:1120px;margin:0 auto;padding:20px 24px 0;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);text-decoration:none;">← CB Radio HQ — full site, live skip outlook, channel guide &amp; more</a>
-
+<body>
+${masthead(false)}
+<main class="tool-page" id="top">
 ${sectionHtml}
-
-<footer style="padding:40px 24px 60px;">
-  <div style="max-width:1120px;margin:0 auto;font-size:12.5px;color:var(--text-faint);border-top:1px solid var(--line);padding-top:20px;">
-    Free tool from <a href="${SITE}/" style="color:var(--orange);">CB Radio HQ</a> — also see the
-    <a href="${SITE}/swr-calculator/" style="color:var(--orange);">SWR Calculator</a>,
-    <a href="${SITE}/antenna-picker/" style="color:var(--orange);">Antenna Picker</a>, and
-    <a href="${SITE}/is-my-radio-legal/" style="color:var(--orange);">Radio Legality Checker</a>.
-  </div>
-</footer>
+<div class="wrap" style="padding:0 20px 64px;">
+  <div class="chips-h">More free tools from CB Radio HQ</div>
+  ${relatedTools()}
+</div>
+</main>
+${footer()}
 
 <script>
 ${tool.extraJs}${toolJs}
@@ -510,31 +648,34 @@ ${tool.extraJs}${toolJs}
 </html>`;
 }
 
-
 function main() {
   fs.rmSync(OUT_DIR, { recursive: true, force: true });
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
-  // copy the main site files into dist/.
-  // The homepage source is kept as homepage.html (so it doesn't get mixed
-  // up with the per-channel index.html files) and is written out as the
-  // real index.html the web server needs — done automatically here.
+  // The homepage source is kept as homepage.html and written out as the real
+  // index.html. Its <!--HQ:HEADER--> / <!--HQ:FOOTER--> placeholders are filled
+  // from the same functions every generated page uses.
   const homepageSrc = path.join(__dirname, "homepage.html");
-  if (fs.existsSync(homepageSrc)) {
-    fs.copyFileSync(homepageSrc, path.join(OUT_DIR, "index.html"));
-  } else if (fs.existsSync(path.join(__dirname, "index.html"))) {
-    // fallback: if only index.html exists, use it
-    fs.copyFileSync(path.join(__dirname, "index.html"), path.join(OUT_DIR, "index.html"));
-  }
+  if (!fs.existsSync(homepageSrc)) throw new Error("homepage.html not found");
+  const homepageHtml = fs.readFileSync(homepageSrc, "utf8");
+
+  const styleMatch = homepageHtml.match(/<style>([\s\S]*?)<\/style>/);
+  if (!styleMatch) throw new Error("Could not find <style> block in homepage.html");
+  // one stylesheet for the whole site: generated pages link /styles.css
+  fs.writeFileSync(path.join(OUT_DIR, "styles.css"), styleMatch[1].trim() + "\n");
+
+  const homeOut = homepageHtml
+    .replace("<!--HQ:HEADER-->", masthead(true))
+    .replace("<!--HQ:FOOTER-->", footer());
+  if (/<!--HQ:/.test(homeOut)) throw new Error("Homepage placeholder left unfilled");
+  fs.writeFileSync(path.join(OUT_DIR, "index.html"), homeOut);
+
   for (const f of ["robots.txt", "netlify.toml", "og-image.png"]) {
     const src = path.join(__dirname, f);
     if (fs.existsSync(src)) fs.copyFileSync(src, path.join(OUT_DIR, f));
   }
   // Note: functions/ is NOT copied here on purpose — Netlify Functions are
-  // bundled directly from the path declared in netlify.toml (functions =
-  // "functions"), independent of the publish/dist folder. Same reason there's
-  // no data/ folder anymore: Skip Outlook and Skip Spots both read/write
-  // Netlify Blobs via their function endpoints instead of a static file.
+  // bundled from the functions directory set in the Netlify project settings.
 
   const channelUrls = [];
   for (const c of CHANNELS) {
@@ -544,47 +685,32 @@ function main() {
     channelUrls.push(`${SITE}/channel/${c.ch}/`);
   }
 
-  // Generate standalone tool pages by extracting from homepage.html —
-  // one source of truth, no copy-paste drift between homepage and tool page.
+  // Standalone tool pages — extracted from homepage.html via markers, so there
+  // is exactly one source of truth for each tool's HTML/JS.
   const toolUrls = [];
-  if (fs.existsSync(homepageSrc)) {
-    const homepageHtml = fs.readFileSync(homepageSrc, "utf8");
-    const styleMatch = homepageHtml.match(/<style>[\s\S]*?<\/style>/);
-    if (!styleMatch) throw new Error("Could not find <style> block in homepage.html");
-    const styleBlock = styleMatch[0];
-
-    for (const tool of TOOL_PAGES) {
-      const sectionHtml = extractSection(homepageHtml, tool.sectionId);
-      const toolJs = extractBetween(
-        homepageHtml,
-        `/* ===TOOLJS:${tool.jsMarker}:START=== */`,
-        `/* ===TOOLJS:${tool.jsMarker}:END=== */`
-      );
-      const dir = path.join(OUT_DIR, tool.slug);
-      fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(path.join(dir, "index.html"), toolPage(tool, styleBlock, sectionHtml, toolJs));
-      toolUrls.push(`${SITE}/${tool.slug}/`);
-    }
+  for (const tool of TOOL_PAGES) {
+    const sectionHtml = extractSection(homepageHtml, tool.sectionId);
+    const toolJs = extractBetween(
+      homepageHtml,
+      `/* ===TOOLJS:${tool.jsMarker}:START=== */`,
+      `/* ===TOOLJS:${tool.jsMarker}:END=== */`
+    );
+    const dir = path.join(OUT_DIR, tool.slug);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "index.html"), toolPage(tool, sectionHtml, toolJs));
+    toolUrls.push(`${SITE}/${tool.slug}/`);
   }
 
-  // Generate hands-on review pages + the /reviews/ index
   const reviewUrls = [];
-  if (fs.existsSync(homepageSrc)) {
-    const homepageHtml = fs.readFileSync(homepageSrc, "utf8");
-    const styleMatch = homepageHtml.match(/<style>[\s\S]*?<\/style>/);
-    const styleBlock = styleMatch ? styleMatch[0] : "";
-
-    for (const review of REVIEWS) {
-      const dir = path.join(OUT_DIR, "reviews", review.slug);
-      fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(path.join(dir, "index.html"), reviewPage(review, styleBlock));
-      reviewUrls.push(`${SITE}/reviews/${review.slug}/`);
-    }
-    const reviewsIndexDir = path.join(OUT_DIR, "reviews");
-    fs.mkdirSync(reviewsIndexDir, { recursive: true });
-    fs.writeFileSync(path.join(reviewsIndexDir, "index.html"), reviewsIndexPage(styleBlock));
-    reviewUrls.push(`${SITE}/reviews/`);
+  for (const review of REVIEWS) {
+    const dir = path.join(OUT_DIR, "reviews", review.slug);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "index.html"), reviewPage(review));
+    reviewUrls.push(`${SITE}/reviews/${review.slug}/`);
   }
+  fs.mkdirSync(path.join(OUT_DIR, "reviews"), { recursive: true });
+  fs.writeFileSync(path.join(OUT_DIR, "reviews", "index.html"), reviewsIndexPage());
+  reviewUrls.push(`${SITE}/reviews/`);
 
   fs.writeFileSync(path.join(OUT_DIR, "sitemap.xml"), buildSitemap(channelUrls, [...toolUrls, ...reviewUrls]));
 
